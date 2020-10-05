@@ -10,12 +10,12 @@ class Task extends Component {
         return (
         <div className="list-group-item d-flex flex-column">
             <div className="d-flex flex-row align-items-center justify-content-between">
-                <input className="mr-2" type="checkbox" value={completed} onChange={()=>onUpdate({id:id,title:title,taskDate:taskDate,completed:!completed})}/>
+                <input className="mr-2" type="checkbox" checked={completed} onChange={()=>onUpdate(id,{title:title,completed:!completed})}/>
                 <Link to={`/tasks/${id}`}>
                     {title}
                 </Link>
                 <div className="ml-2 btn-group">
-                    <Link className="btn btn-outline-primary" to={`/tasks/${id}?edit`}>
+                    <Link className="btn btn-outline-primary" to={`/tasks/${id}/edit`}>
                         Edit
                     </Link>
                     <button className="btn btn-outline-danger" onClick={()=>onRemove(id)}>
@@ -33,9 +33,9 @@ class Task extends Component {
 
 Task.defaultProps = {
     id:1,
-    title:"Complete client and server",
+    title:"",
     completed:false,
-    createdAt:"14"
+    createdAt:""
 }
 
 export default Task;

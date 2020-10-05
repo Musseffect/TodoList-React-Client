@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import {setTitle} from "../actions/actions.js";
-import { fetchTasksIfNeeded, addTask, removeTask, updateTask } from '../actions/taskActions.js';
+import { fetchTasksIfNeeded, addTask, removeTask, requestUpdateTask } from '../actions/taskActions.js';
 import Task from '../components/Task.jsx';
 import Loader from '../containers/loader.jsx';
 
@@ -20,11 +20,10 @@ const mapStateToProps=function(state)
 const mapDispatchToProps=function(dispatch)
 {
 return ({
-    fetchTasksIfNeeded:function(){dispatch(fetchTasksIfNeeded());},
-    addTask:function(data){dispatch(addTask(data));},
-    removeTask:function(id){dispatch(removeTask(id));},
-    updateTask:function(data){dispatch(updateTask(data));},
-    setTitle:function(title){dispatch(setTitle(title));}
+    fetchTasksIfNeeded:function(token){dispatch(fetchTasksIfNeeded(token,token));},
+    addTask:function(data,token){dispatch(addTask(data,token));},
+    removeTask:function(id,token){dispatch(removeTask(id,token));},
+    requestUpdateTask:function(id,data,token){dispatch(requestUpdateTask(id,data,token));}
 });
 };
 
@@ -35,10 +34,12 @@ class TaskListPage extends Component {
         this.state = {taskTitle:""};
         this.onInputChange = this.onInputChange.bind(this);
         this.onTaskSubmit = this.onTaskSubmit.bind(this);
+        this.onUpdate = this.onUpdate.bind(this);
+        this.onRemove = this.onRemove.bind(this);
     }
     componentDidMount(){
-        this.props.setTitle("TaskList");
-        this.props.fetchTasksIfNeeded();
+        setTitle("TaskList");
+        this.props.fetchTasksIfNeeded(this.props.token);
     }
     onInputChange(e){
         const target = e.target;
@@ -48,7 +49,7 @@ class TaskListPage extends Component {
     }
     onTaskSubmit(e){
         let {taskTitle} = this.state;
-        this.props.addTask({title:taskTitle});
+        this.props.addTask({title:taskTitle},this.props.token);
         e.preventDefault();
     }
     clearForm(e){
@@ -56,6 +57,12 @@ class TaskListPage extends Component {
     }
     isValid(){
         return this.state.taskTitle.length>0;
+    }
+    onUpdate(id,data){
+        this.props.requestUpdateTask(id,data,this.props.token);
+    }
+    onRemove(id){
+        this.props.removeTask(id,this.props.token);
     }
     render(){
         let {taskTitle} = this.state;
@@ -77,8 +84,8 @@ class TaskListPage extends Component {
                 </form>)}
                 <div className="list-group">
                     {tasks.map(function(item){
-                        return <Task key={item.id} {...item}></Task>
-                    })}
+                        return <Task key={item.id} {...item} onRemove = {this.onRemove} onUpdate = {this.onUpdate}></Task>
+                    },this)}
                 </div>
             </Loader>
         </div>);

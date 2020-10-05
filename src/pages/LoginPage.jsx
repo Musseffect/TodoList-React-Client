@@ -1,24 +1,23 @@
 import React, { Component } from 'react';
 import { connect } from "react-redux";
 import { withRouter } from 'react-router';
-import {setTitle,login} from "../actions/actions.js";
+import {setTitle} from "../actions/actions.js";
+import {auth} from "../api/auth.js";
 
 const mapStateToProps=function(state){
   return {
-    error:state.login.error
+    error:state.ui.loginError
   };
 };
 
 const mapDispatchToProps=function(dispatch){
   return ({
-    setTitle:function(title){dispatch(setTitle(title));},
   });
 };
 
 class LoginPage extends Component {
   constructor(props){
       super(props);
-      this.state = {username:"",password:""};
       this.onSubmit = this.onSubmit.bind(this);
       this.onInputChange = this.onInputChange.bind(this);
   }
@@ -26,7 +25,8 @@ class LoginPage extends Component {
     let location = this.props.location;
     let {from} = location.state || { from: { pathname: "/" } };
     this.from = from;
-    this.props.setTitle("Login page");
+    //console.log(from);
+    setTitle("Login page");
   }
   onInputChange(e){
     const target = e.target;
@@ -35,18 +35,16 @@ class LoginPage extends Component {
     this.setState({[name]:value});
   }
   onSubmit(e){
-    let {cookies,history} = this.props;
-    let state = "state";
-    cookies.set("state",state);
-    login(state);
-    //cookies.set("access_token","huj");
-    //history.replace(this.from);
-    //history.push("/");
-    //e.preventDefault();
+    let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let state = "";
+    for (let i = 0; i < 40; i++)
+      state += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    localStorage.setItem("state", state);
+    //console.log(state);
+    auth(state);
   }
   render() {
-    let {location,error} = this.props;
-    let {login,password} = this.state;
+    let {error} = this.props;
     return (
       <div>
           {error&&<div>{error}</div>}

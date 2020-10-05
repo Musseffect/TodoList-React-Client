@@ -1,9 +1,8 @@
 import { 
-    SET_TITLE,
     ERROR
 } from "../actions/actions";
 import { 
-    ADD_SUBTASK,
+    RECEIVE_SUBTASK,
     REMOVE_SUBTASK
 } from "../actions/subTaskActions";
 import { 
@@ -13,13 +12,25 @@ import {
     REQUEST_TASK,
     RECEIVE_TASK,
     ERROR_RECEIVING_TASK,
-    ERROR_RECEIVING_TASKS } from "../actions/taskActions";
+    ERROR_RECEIVING_TASKS, 
+    UPDATE_TASK } from "../actions/taskActions";
 
 var rootReducer = function(state,action){
     switch(action.type){
-        case SET_TITLE:
-            document.title = action.title;
-            return state;
+        case UPDATE_TASK:
+            return {
+                        ...state,
+                        tasks:{
+                            ...state.tasks,
+                            items:{
+                                ...state.tasks.items,
+                                [action.id]:{
+                                    ...state.tasks.items[action.id],
+                                    ...action.data
+                                }
+                            }
+                        }
+                    };
         case REQUEST_TASKS:
             return {
                         ...state,
@@ -66,11 +77,11 @@ var rootReducer = function(state,action){
                         tasks:{
                             ...state.tasks,
                             items:{
-                                ...state.tasks.items,
                                 [action.task.id]:{
                                     ...action.task,
                                     isLoading:false
-                                }
+                                },
+                                ...state.tasks.items
                             }
                         }
                     };
@@ -85,23 +96,9 @@ var rootReducer = function(state,action){
                             }
                         }
                     };
-        case REMOVE_SUBTASK:
+        case REMOVE_SUBTASK:{
             let index = state.tasks.items[action.taskId].subTasks.findIndex((value)=>value.id==action.id);
-            return {
-                        ...state,
-                        tasks:{
-                            ...state.tasks,
-                            items:{
-                                ...state.items,
-                                [action.taskId]:{
-                                    ...state.tasks.items[action.taskId],
-                                    subTasks:state.tasks.items[action.taskId].subTasks.splice(index,1)
-                                }
-                            }
-                        }
-                    };
-        case ADD_SUBTASK:
-            state.tasks.items[action.taskId].subTasks.push(action.data);
+            state.tasks.items[action.taskId].subTasks.splice(index,1);
             return {
                         ...state,
                         tasks:{
@@ -115,12 +112,34 @@ var rootReducer = function(state,action){
                             }
                         }
                     };
+                }
+        case RECEIVE_SUBTASK:{
+            let index = state.tasks.items[action.taskId].subTasks.findIndex((value)=>value.id==action.data.id);
+            if(index==-1){
+                state.tasks.items[action.taskId].subTasks.unshift(action.data);
+            }else{
+                state.tasks.items[action.taskId].subTasks[index] = action.data;
+            }
+            return {
+                        ...state,
+                        tasks:{
+                            ...state.tasks,
+                            items:{
+                                ...state.items,
+                                [action.taskId]:{
+                                    ...state.tasks.items[action.taskId],
+                                    subTasks:state.tasks.items[action.taskId].subTasks.slice()
+                                }
+                            }
+                        }
+                    };
+                }
         case ERROR:
             return {
                     ...state,
                     ui:{
                         ...state.ui,
-                        [action.type]:action.message
+                        [action.errorType]:action.message
                     }
                 };
         case ERROR_RECEIVING_TASK:

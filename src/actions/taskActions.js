@@ -12,50 +12,46 @@ export const ERROR_RECEIVING_TASK = "ERROR_RECEIVING_TASK";
 export const ERROR_RECEIVING_TASKS = "ERROR_RECEIVING_TASKS";
 
 
-export var removeTask = function(id){
+export var removeTask = function(id,token){
     return function(dispatch){
-        return api.removeTask(id)
+        return api.removeTask(id,token)
             .then(
             response =>{
                     if(response.ok)
                         dispatch({type:REMOVE_TASK,id});
                     else
                         throw new Error("Cannot remove task");
-                },
-            error => dispatch(handleError(error.message,"taskRemoveError"))
-            )
+                }
+            ).catch(error => dispatch(handleError(error.message,"taskRemoveError")))
     };
 }
 
-export var updateTask = function(id,data){
+export var requestUpdateTask = function(id,data,token){
     return function(dispatch){
-        dispatch({type:UPDATE_TASK});
-        return api.updateTask(id,data)
+        return api.updateTask(id,data,token)
             .then(
             response =>{
                     if(response.ok)
-                        dispatch(receiveTask(response.json()))
+                        dispatch({type:UPDATE_TASK,data,id})
                     else
                         throw new Error("Cannot update task");
-                },
-            error => dispatch(handleError(error.message,"taskUpdateError"))
-            )
+                }
+            ).catch(error => dispatch(handleError(error.message,"taskUpdateError")))
     };
 }
 
-export var addTask = function(data){
+export var addTask = function(data,token){
     return function(dispatch){
         dispatch({type:ADD_TASK});
-        return api.addTask(data)
+        return api.addTask(data,token)
             .then(
             response =>{
                     if(response.ok)
-                        dispatch(receiveTask(response.json()))
+                        response.json().then(json=>dispatch({id:json.id,data:{...json,isLoading:false,subTasks:[]},type:UPDATE_TASK}));
                     else
                         throw new Error("Cannot add task");
-                },
-            error => dispatch(handleError(error.message,"taskPostingError"))
-            )
+                }
+            ).catch(error => dispatch(handleError(error.message,"taskPostingError")))
     };
 }
 
@@ -69,19 +65,18 @@ var receiveTasks = function(tasks){
     return {type:RECEIVE_TASKS,tasks}
 }
 
-var fetchTasks = function(){
+var fetchTasks = function(token){
     return function(dispatch){
         dispatch(requestTasks());
-        return api.fetchTaskList()
+        return api.fetchTaskList(token)
             .then(
             response => {
                 if(response.ok)
                     response.json().then(json=>dispatch(receiveTasks(json)));
                 else
                     throw new Error("Cannot load tasks");
-                },
-            error => dispatch(handleTasksFetchingError(error.message))
-            );
+                }
+            ).catch(error => dispatch(handleTasksFetchingError(error.message)));
     };
 }
 
@@ -91,10 +86,10 @@ function shouldFetchTasks(state){
     return !isCached;
 }
 
-export var fetchTasksIfNeeded = function(){
+export var fetchTasksIfNeeded = function(token){
     return (dispatch,getState)=>{
         if(shouldFetchTasks(getState()))
-            return dispatch(fetchTasks());
+            return dispatch(fetchTasks(token));
     }
 }
 var requestTask = function(id){
@@ -107,19 +102,18 @@ var receiveTask = function(taskJson){
     return {type:RECEIVE_TASK,task:{...taskJson.task,subTasks:taskJson.subTasks}};
 }
 
-var fetchTask = function(id){
+var fetchTask = function(id,token){
     return function(dispatch){
         dispatch(requestTask(id));
-        return api.fetchTask(id)
+        return api.fetchTask(id,token)
             .then(
             response =>{
                     if(response.ok)
                         response.json().then(json=>dispatch(receiveTask(json)))
                     else
                         throw new Error("Cannot load task");
-                },
-            error => dispatch(handleTaskFetchingError(id,error.message))
-            )
+                }
+            ).catch(error => dispatch(handleTaskFetchingError(id,error.message)))
     };
 }
 function shouldFetchTask(state,id){
@@ -131,9 +125,9 @@ function shouldFetchTask(state,id){
     }
     return true;
 }
-export var fetchTaskIfNeeded = function(taskId){
+export var fetchTaskIfNeeded = function(taskId,token){
     return (dispatch,getState)=>{
         if(shouldFetchTask(getState(),taskId))
-            return dispatch(fetchTask(taskId));
+            return dispatch(fetchTask(taskId,token));
     }
 }
